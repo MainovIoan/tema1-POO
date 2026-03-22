@@ -1,0 +1,316 @@
+/*
+    Programul gestioneaza situatii scolare
+    Datele de intrare sunt: studenti (nume,grupa),discipline(nume,nota)
+    Operatii:adaugare discipline,calcul medie,verificare promovare,afisare student cu media maxima,afisare studenti picati
+*/
+ 
+#include <iostream>
+#include <cstring>
+ 
+
+
+const int MAX_DISC = 10;
+const int MAX_STU = 30;
+ 
+
+
+
+class Disciplina
+{
+private:
+
+    char nume[100];
+    int nota;
+ 
+    bool notaValida() const
+    {
+        if (nota >= 1 && nota <= 10)
+            return true;
+        else
+            return false;
+    }
+ 
+public:
+    Disciplina()
+    {
+        strcpy(this->nume,"");
+        this->nota=1;
+    }
+    Disciplina(const char* n,int nt)
+    {
+        strcpy(this->nume,n);
+        this->nota=nt;
+        if (!notaValida())
+            this->nota=1;
+    }
+ 
+    Disciplina(const Disciplina& d)
+    {
+        strcpy(this->nume,d.nume);
+        this->nota=d.nota;
+    }
+ 
+    Disciplina& operator=(const Disciplina& d)
+    {
+        strcpy(this->nume,d.nume);
+        this->nota=d.nota;
+        return *this;
+    }
+ 
+    ~Disciplina() {}
+ 
+    int getNota() const
+    {
+        return this->nota;
+    }
+ 
+    bool promovata() const
+    {
+        return this->nota>=5;
+    }
+ 
+    friend std::ostream& operator<<(std::ostream& os, const Disciplina& d)
+    {
+        os <<d.nume<< ": " <<d.nota;
+        return os;
+    }
+};
+ 
+
+
+
+
+
+class Student
+{
+private:
+    char nume[100];
+    char grupa[100];
+
+
+    Disciplina disc[MAX_DISC];
+    int nrDisc;
+ 
+
+    void copiaza(const Student& s)
+    {
+        strcpy(this->nume,s.nume);
+        strcpy(this->grupa, s.grupa);
+        this->nrDisc =s.nrDisc;
+        for (int i=0; i<s.nrDisc;i++)
+            this->disc[i] = s.disc[i];
+    }
+ 
+public:
+    Student()
+    {
+        strcpy(this->nume,"");
+        strcpy(this->grupa,"");
+        this->nrDisc= 0;
+    }
+ 
+    Student(const char* n, const char* g)
+    {
+        strcpy(this->nume,n);
+        strcpy(this->grupa,g);
+        this->nrDisc=0;
+    }
+ 
+    Student(const Student& s)
+    {
+        copiaza(s);
+    }
+ 
+    Student& operator=(const Student& s)
+    {
+        copiaza(s);
+        return *this;
+    }
+ 
+    ~Student()
+    {
+        std::cout<<"Destructor student "<<this->nume<< std::endl;
+    }
+ 
+    void adaugaDisciplina(const Disciplina& d)
+    {
+        if (this->nrDisc<MAX_DISC)
+        {
+            this->disc[this->nrDisc]=d;
+            this->nrDisc++;
+        }
+    }
+ 
+    double medie() const
+    {
+        if (this->nrDisc==0)
+            return 0;
+        double suma=0;
+        for (int i=0; i<this->nrDisc;i++)
+            suma=suma+this->disc[i].getNota();
+        return suma/this->nrDisc;
+    }
+ 
+    bool aPicat() const
+    {
+        for (int i=0;i<this->nrDisc; i++)
+            if (!this->disc[i].promovata())
+                return true;
+        return false;
+    }
+ 
+    friend std::ostream& operator<<(std::ostream& os,const Student& s)
+    {
+        os << "Student: "<<s.nume<< ", grupa " <<s.grupa<< std::endl;
+        for (int i = 0; i < s.nrDisc; i++)
+            os<< "  " <<s.disc[i] << std::endl;
+        return os;
+    }
+};
+ 
+
+
+
+
+
+
+
+class Centralizator
+{
+private:
+    Student stu[MAX_STU];
+    int nrStu;
+ 
+    int indexMaxima() const
+    {
+        int idx =0;
+        for (int i=1;i<this->nrStu;i++)
+            if (this->stu[i].medie() > this->stu[idx].medie())
+                idx=i;
+        return idx;
+    }
+ 
+public:
+    Centralizator()
+    {
+        this->nrStu=0;
+    }
+ 
+    Centralizator(const Centralizator& c)
+    {
+        this->nrStu=c.nrStu;
+        for (int i=0;i<this->nrStu; i++)
+            this->stu[i]=c.stu[i];
+    }
+ 
+    Centralizator& operator=(const Centralizator& c)
+    {
+        this->nrStu=c.nrStu;
+        for (int i=0;i<this->nrStu;i++)
+            this->stu[i]=c.stu[i];
+        return *this;
+    }
+ 
+    ~Centralizator()
+    {
+        std::cout <<"Destructor centralizator"<< std::endl;
+    }
+ 
+    void adaugaStudent(const Student& s)
+    {
+        if (this->nrStu<MAX_STU)
+        {
+            this->stu[this->nrStu]=s;
+            this->nrStu++;
+        }
+    }
+ 
+    void afiseazaCelMaiBun() const
+    {
+        if (this->nrStu == 0)
+            return;
+        int i = indexMaxima();
+        std::cout << "Cel mai bun student:" << std::endl;
+        std::cout << this->stu[i];
+        std::cout << "Media: " << this->stu[i].medie() << std::endl;
+    }
+ 
+    void afiseazaPicati() const
+    {
+        std::cout<<"Studenti picati:" <<std::endl;
+        for (int i=0;i<this->nrStu;i++)
+            if (this->stu[i].aPicat())
+                std::cout<<this->stu[i];
+    }
+ 
+    void mediaGenerala() const
+    {
+        if (this->nrStu==0)
+            return;
+        double suma = 0;
+        for (int i = 0; i < this->nrStu; i++)
+            suma = suma + this->stu[i].medie();
+        std::cout << "Media generala:"<< suma / this->nrStu << std::endl;
+    }
+ 
+    friend std::ostream& operator<<(std::ostream& os, const Centralizator& c)
+    {
+        os << "     Centralizator         " << std::endl;
+        for (int i=0; i<c.nrStu; i++)
+            os<<c.stu[i];
+        return os;
+    }
+};
+ 
+
+
+
+
+
+
+int main()
+{
+    Disciplina d1("mate",9);
+    Disciplina d2("BD",10);
+    Disciplina d3("POO",5);
+    Disciplina d4("SD",3);
+    Disciplina d5("LOG",7);
+ 
+    Student s1("Paul Ionescu","132");
+    s1.adaugaDisciplina(d1);
+    s1.adaugaDisciplina(d2);
+ 
+    Student s2("Vasile Popescu","132");
+    s2.adaugaDisciplina(d3);
+    s2.adaugaDisciplina(d4);
+ 
+    Student s3("Maria Dumitrescu","133");
+    s3.adaugaDisciplina(d5);
+    s3.adaugaDisciplina(d1);
+ 
+    std::cout<<s1<<s2<<s3;
+ 
+    if (s2.aPicat())
+        std::cout<<"Vasile Popescu a picat"<<std::endl;
+    else
+        std::cout<<"Vasile Popescu a promovat"<<std::endl;
+ 
+    Student s4(s1);
+    Student s5("Temp","000");
+    s5=s2;
+ 
+    Centralizator c;
+    c.adaugaStudent(s1);
+    c.adaugaStudent(s2);
+    c.adaugaStudent(s3);
+ 
+    std::cout<<c;
+    c.afiseazaCelMaiBun();
+    c.afiseazaPicati();
+    c.mediaGenerala();
+ 
+    Centralizator c2(c);
+    std::cout<<c2;
+ 
+    return 0;
+}
